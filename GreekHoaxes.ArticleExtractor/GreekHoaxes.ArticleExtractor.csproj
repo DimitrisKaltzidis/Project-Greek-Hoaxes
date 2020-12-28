@@ -6,9 +6,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="articles.json" />
+    <None Remove="articles_decorated.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="articles.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="articles_decorated.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AngleSharp" Version="0.14.0" />
     <PackageReference Include="AngleSharp.Io" Version="0.14.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="RestSharp" Version="106.11.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GreekHoaxes.Models\GreekHoaxes.Models.csproj" />

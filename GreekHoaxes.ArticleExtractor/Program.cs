@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +15,7 @@ using AngleSharp;
 using AngleSharp.Dom;
 using GreekHoaxes.Models;
 using Newtonsoft.Json;
+using RestSharp;
 
 namespace GreekHoaxes.ArticleExtractor
 {
@@ -28,25 +34,33 @@ namespace GreekHoaxes.ArticleExtractor
             var firstPageNumber = await GetPaginationFirstPage();
             var lastPageNumber = await GetPaginationLastPage();
 
-            var articlesFromFile = File.ReadAllText("articles.json");
-
             IList<Article> articles = null;
 
-            if (articlesFromFile == null)
+            if (!File.Exists("articles.json"))
             {
+                // Read articles titles and short description
                 articles = await ReadAllArticles(firstPageNumber, lastPageNumber);
                 var resultString = JsonConvert.SerializeObject(articles);
                 File.WriteAllText(@"articles.json", resultString);
             }
             else
             {
+                var articlesFromFile = File.ReadAllText("articles.json");
                 articles = JsonConvert.DeserializeObject<List<Article>>(articlesFromFile);
             }
 
-
-            articles = await DecorateArticles(articles);
-            var decoratedResultString = JsonConvert.SerializeObject(articles);
-            File.WriteAllText(@"articles_decorated.json", decoratedResultString);
+            if (!File.Exists("articles_decorated.json"))
+            {
+                // Read article body, image and full description
+                articles = await DecorateArticles(articles);
+                var decoratedResultString = JsonConvert.SerializeObject(articles);
+                File.WriteAllText(@"articles_decorated.json", decoratedResultString);
+            }
+            else
+            {
+                var decoratedArticlesFromFile = File.ReadAllText("articles_decorated.json");
+                articles = JsonConvert.DeserializeObject<List<Article>>(decoratedArticlesFromFile);
+            }
         }
 
         public static async Task<int> GetPaginationFirstPage()
@@ -163,15 +177,18 @@ namespace GreekHoaxes.ArticleExtractor
             return false;
         }
 
-
         public static async Task<IList<Article>> DecorateArticles(IList<Article> articles)
         {
             Random random = new Random();
+            int currentPosition = 0;
+            int articlesCount = articles.Count;
 
             foreach (var article in articles) {
+                Console.WriteLine($"Processing article {currentPosition} of {articlesCount}.");
                 await DecorateSingleArticle(article);
-                var randomWait = random.Next(600, 900);
+                var randomWait = random.Next(200, 400);
                 Thread.Sleep(randomWait);
+                currentPosition++;
             }
 
             return articles;
